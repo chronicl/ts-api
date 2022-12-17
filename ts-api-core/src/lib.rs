@@ -158,6 +158,11 @@ impl ApiExtractor for CookieJar {
     const TYPE: Option<ApiExtractorType> = None;
 }
 
+impl<T: ApiExtractor> ApiExtractor for &T {
+    type Inner = T::Inner;
+    const TYPE: Option<ApiExtractorType> = T::TYPE;
+}
+
 pub enum TsType {
     Json,
     Path,
