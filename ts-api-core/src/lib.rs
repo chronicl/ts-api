@@ -44,10 +44,7 @@ macro_rules! impl_api_extractor {
             Some(
                 match Self::TYPE? {
                     ApiExtractorType::Json => {
-                        vec![
-                            "body: JSON.stringify(json)",
-                            "mediaType: 'application/json; charset=utf-8'",
-                        ]
+                        vec!["body: json", "mediaType: 'application/json; charset=utf-8'"]
                     }
                     // Todo: Add support for Path simply being String, (String, String), ...
                     ApiExtractorType::Path => vec!["path"],
