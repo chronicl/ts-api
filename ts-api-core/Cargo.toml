@@ -10,3 +10,4 @@ darling = { version = "0.14" }
 syn = "1"
 ts-rs = { workspace = true }
 poem = { workspace = true }
+convert_case = "0.6"

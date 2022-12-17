@@ -6,5 +6,5 @@ members = [
 ]
 
 [workspace.dependencies]
-ts-rs = { git = "https://github.com/chronicl/ts-rs.git", features = ["poem"] }
+ts-rs = { git = "https://github.com/chronicl/ts-rs.git" }
 poem = { version = "1.3" }

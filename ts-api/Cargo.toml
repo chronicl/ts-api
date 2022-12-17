@@ -10,3 +10,6 @@ ts-api-core = { path = "../ts-api-core" }
 ts-api-macros = { path = "../ts-api-macros" }
 ts-rs = { workspace = true }
 poem = { workspace = true }
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }

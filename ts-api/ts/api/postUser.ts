@@ -1,29 +1,26 @@
 import { request as __request } from '../request';
 import { CancelablePromise } from '../CancelablePromise';
 
-export interface RequestType {
-  a: number;
+export interface B {
+  b: C;
 }
 
-export interface ResponseType {
-  a: number;
+export interface C {
+  c: number;
 }
 
-export interface Path {
-  post: number;
+export interface A {
+  a: B;
 }
 
-export interface Query {}
-
-export function request(json: RequestType, path: Path, query: Query): CancelablePromise<ResponseType> {
+export function request(json: [B, A], path: C): CancelablePromise<C> {
   return __request(
     { url: 'http://localhost:3000' },
     {
       method: 'POST',
-      url: 'backend/user/{post}',
+      url: '/backend/a',
       body: JSON.stringify(json),
       path,
-      query,
     }
   );
 }

@@ -1,42 +1,153 @@
-pub trait ApiExtractor {
-    type Inner;
-    const TYPE: ApiExtractorType;
-}
-
-pub enum ApiExtractorType {
-    None,
-    Json,
-    Query,
-    Path,
-}
-
+use convert_case::{Case, Casing};
 use poem::web::{Data, Form, Json, Path, Query};
+use ts_rs::{Dependencies, TS};
 
-impl<T> ApiExtractor for Json<T> {
-    type Inner = T;
-    const TYPE: ApiExtractorType = ApiExtractorType::Json;
+pub trait ApiExtractor {
+    type Inner: TS;
+    const TYPE: Option<ApiExtractorType>;
+
+    fn param() -> Option<String> {
+        let mut param = match Self::TYPE? {
+            ApiExtractorType::Json => "json",
+            ApiExtractorType::Path => "path",
+            ApiExtractorType::Query => "query",
+        }
+        .to_string();
+        param.push_str(": ");
+        param.push_str(&Self::Inner::name_with_generics());
+        Some(param)
+    }
+
+    fn options() -> Option<String> {
+        Some(
+            match Self::TYPE? {
+                ApiExtractorType::Json => "body: JSON.stringify(json)",
+                // Todo: Add support for Path simply being String, (String, String), ...
+                ApiExtractorType::Path => "path",
+                ApiExtractorType::Query => "query",
+            }
+            .to_string(),
+        )
+    }
+
+    fn response_type() -> Option<String> {
+        Some(format!(
+            ": CancelablePromise<{}>",
+            Self::Inner::name_with_generics()
+        ))
+    }
 }
 
-impl<T> ApiExtractor for Query<T> {
+#[test]
+fn test_atb() {
+    trait A {
+        type B: TS;
+    }
+
+    impl A for u32 {
+        type B = u32;
+    }
+}
+
+#[derive(Default)]
+pub struct ApiRequest {
+    params: Vec<String>,
+    response_type: Option<String>,
+    options: Vec<String>,
+    types: Dependencies,
+}
+
+impl ApiRequest {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn register_param<T: ApiExtractor>(&mut self) {
+        if let Some(p) = T::param() {
+            self.params.push(p);
+            if let Some(options) = T::options() {
+                self.options.push(options);
+            }
+            self.types.add::<T::Inner>();
+        }
+    }
+
+    pub fn register_response_type<T: ApiExtractor>(&mut self) {
+        self.response_type = T::response_type();
+        self.types.add::<T::Inner>();
+    }
+
+    pub fn finish(
+        &mut self,
+        server_url: impl AsRef<str>,
+        method: impl AsRef<str>,
+        path: impl AsRef<str>,
+    ) -> String {
+        let params: String = self.params.join(", ");
+        let options: String = self.options.join(",\n");
+        let response_type = self.response_type.to_owned().unwrap_or_default();
+        let server_url = server_url.as_ref();
+        let method = method.as_ref();
+        let path = path.as_ref();
+
+        let mut request = String::new();
+        request.push_str("import { request as __request } from '../request';\n");
+        request.push_str("import { CancelablePromise } from '../CancelablePromise';\n\n");
+
+        for ty in self.types.values() {
+            request.push_str(&format!("export {}\n\n", ty.ts_declaration))
+        }
+
+        let request_fn = format!(
+            r#"export function request({params}){response_type} {{
+    return __request(
+        {{ url: '{server_url}' }},
+        {{
+            method: '{method}',
+            url: '{path}',
+            {options}
+        }}
+    );
+}}"#
+        );
+        request.push_str(&request_fn);
+
+        request
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ApiExtractorType {
+    Json,
+    Path,
+    Query,
+}
+
+impl<T: TS> ApiExtractor for Json<T> {
     type Inner = T;
-    const TYPE: ApiExtractorType = ApiExtractorType::Query;
+    const TYPE: Option<ApiExtractorType> = Some(ApiExtractorType::Json);
+}
+
+impl<T: TS> ApiExtractor for Query<T> {
+    type Inner = T;
+    const TYPE: Option<ApiExtractorType> = Some(ApiExtractorType::Query);
 }
 
 // Todo: Add Form support
-impl<T> ApiExtractor for Form<T> {
+impl<T: TS> ApiExtractor for Form<T> {
     type Inner = T;
     // Should be Form once supported
-    const TYPE: ApiExtractorType = ApiExtractorType::None;
+    const TYPE: Option<ApiExtractorType> = None;
 }
 
-impl<T> ApiExtractor for Path<T> {
+impl<T: TS> ApiExtractor for Path<T> {
     type Inner = T;
-    const TYPE: ApiExtractorType = ApiExtractorType::Path;
+    const TYPE: Option<ApiExtractorType> = Some(ApiExtractorType::Path);
 }
 
-impl<T> ApiExtractor for Data<T> {
+impl<T: TS> ApiExtractor for Data<T> {
     type Inner = T;
-    const TYPE: ApiExtractorType = ApiExtractorType::None;
+    const TYPE: Option<ApiExtractorType> = None;
 }
 
 pub enum TsType {
@@ -46,13 +157,45 @@ pub enum TsType {
 }
 
 pub trait ApiHandler {
-    const API: ApiRoute;
-}
+    const METHOD: ApiMethod;
+    const PATH: &'static str;
 
-#[derive(Debug, Clone)]
-pub struct ApiRoute {
-    pub method: ApiMethod,
-    pub path: &'static str,
+    fn typescript(server_url: impl AsRef<str>) -> String;
+
+    fn ts_path() -> String {
+        Self::PATH
+            .split('/')
+            .map(|s| {
+                if let Some(s) = s.strip_prefix(':') {
+                    format!("{{{s}}}")
+                } else {
+                    s.to_string()
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("/")
+    }
+
+    // Todo: This should maybe include the method since it's possible to have the same path with different methods
+    fn ts_file_name() -> String {
+        let file_name = Self::PATH
+            .split('/')
+            .map(|s| {
+                if let Some(s) = s.strip_prefix(':') {
+                    s
+                } else {
+                    s
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("_")
+            .to_case(Case::Camel);
+        if file_name.is_empty() {
+            "root".to_string()
+        } else {
+            file_name
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, darling::FromMeta, Eq, PartialEq, Hash)]
@@ -67,4 +210,20 @@ pub enum ApiMethod {
     Connect,
     Patch,
     Trace,
+}
+
+impl ApiMethod {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Get => "GET",
+            Self::Post => "POST",
+            Self::Put => "PUT",
+            Self::Delete => "DELETE",
+            Self::Head => "HEAD",
+            Self::Options => "OPTIONS",
+            Self::Connect => "CONNECT",
+            Self::Patch => "PATCH",
+            Self::Trace => "TRACE",
+        }
+    }
 }

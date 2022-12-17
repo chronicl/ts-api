@@ -8,6 +8,5 @@ async fn a(_b: Json<String>) -> Json<u32> {
 }
 
 fn main() {
-    assert_eq!(<a as ApiHandler>::Request::name(), "string");
-    assert_eq!(<a as ApiHandler>::Response::name(), "number");
+    println!("{}", a::typescript("http://localhost:3000"));
 }

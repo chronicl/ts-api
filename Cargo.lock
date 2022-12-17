@@ -68,6 +68,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "convert_case"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec182b0ca2f35d8fc196cf3404988fd8b8c739a4d270ff118a398feb0cbec1ca"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -857,6 +866,7 @@ name = "ts-api"
 version = "0.1.0"
 dependencies = [
  "poem",
+ "serde",
  "ts-api-core",
  "ts-api-macros",
  "ts-rs",
@@ -866,6 +876,7 @@ dependencies = [
 name = "ts-api-core"
 version = "0.1.0"
 dependencies = [
+ "convert_case",
  "darling",
  "poem",
  "syn",
@@ -891,9 +902,8 @@ dependencies = [
 [[package]]
 name = "ts-rs"
 version = "6.2.0"
-source = "git+https://github.com/chronicl/ts-rs.git#49dc098684fbee3ce044915a15cd4918fc6ee379"
+source = "git+https://github.com/chronicl/ts-rs.git#00c05645cc920f1e4d760a2d85e36d3fda81285a"
 dependencies = [
- "poem",
  "thiserror",
  "ts-rs-macros",
 ]
@@ -901,7 +911,7 @@ dependencies = [
 [[package]]
 name = "ts-rs-macros"
 version = "6.2.0"
-source = "git+https://github.com/chronicl/ts-rs.git#49dc098684fbee3ce044915a15cd4918fc6ee379"
+source = "git+https://github.com/chronicl/ts-rs.git#00c05645cc920f1e4d760a2d85e36d3fda81285a"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -931,6 +941,12 @@ name = "unicode-ident"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ceab39d59e4c9499d4e5a8ee0e2735b891bb7308ac83dfb4e80cad195c9f6f3"
+
+[[package]]
+name = "unicode-segmentation"
+version = "1.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fdbf052a0783de01e944a6ce7a8cb939e295b1e7be835a1112c3b9a7f047a5a"
 
 [[package]]
 name = "version_check"
