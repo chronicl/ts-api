@@ -1,0 +1,21 @@
+[package]
+name = "ts-api-macros"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "1", features = ["full", "extra-traits"] }
+quote = "1"
+proc-macro2 = "1.0"
+darling = { version = "0.14" }
+proc-macro-crate = "1.2"
+ts-api-core = { path = "../ts-api-core" }
+
+[dev-dependencies]
+trybuild = "1.0"
+ts-api = { path = "../ts-api" }
+poem = { workspace = true }
+ts-rs = { workspace = true }

@@ -1,0 +1,10 @@
+[workspace]
+members = [
+  "ts-api",
+  "ts-api-core",
+  "ts-api-macros"
+]
+
+[workspace.dependencies]
+ts-rs = { git = "https://github.com/chronicl/ts-rs.git", features = ["poem"] }
+poem = { version = "1.3" }

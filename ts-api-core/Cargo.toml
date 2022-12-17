@@ -1,0 +1,12 @@
+[package]
+name = "ts-api-core"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+darling = { version = "0.14" }
+syn = "1"
+ts-rs = { workspace = true }
+poem = { workspace = true }
