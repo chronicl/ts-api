@@ -6,50 +6,61 @@ use poem::web::{
 use ts_rs::{Dependencies, TS};
 
 pub trait ApiExtractor {
-    type Inner: TS;
+    type Inner;
     const TYPE: Option<ApiExtractorType>;
 
     fn param() -> Option<String> {
-        let mut param = match Self::TYPE? {
-            ApiExtractorType::Json => "json",
-            ApiExtractorType::Path => "path",
-            ApiExtractorType::Query => "query",
-        }
-        .to_string();
-        param.push_str(": ");
-        param.push_str(&Self::Inner::name_with_generics());
-        Some(param)
+        None
     }
 
     fn options() -> Option<String> {
-        Some(
-            match Self::TYPE? {
-                ApiExtractorType::Json => "body: JSON.stringify(json)",
-                // Todo: Add support for Path simply being String, (String, String), ...
-                ApiExtractorType::Path => "path",
-                ApiExtractorType::Query => "query",
-            }
-            .to_string(),
-        )
+        None
     }
 
     fn response_type() -> Option<String> {
-        Some(format!(
-            ": CancelablePromise<{}>",
-            Self::Inner::name_with_generics()
-        ))
+        None
     }
+
+    fn add_dependencies(dependencies: &mut Dependencies) {}
 }
 
-#[test]
-fn test_atb() {
-    trait A {
-        type B: TS;
-    }
+macro_rules! impl_api_extractor {
+    () => {
+        fn param() -> Option<String> {
+            let mut param = match Self::TYPE? {
+                ApiExtractorType::Json => "json",
+                ApiExtractorType::Path => "path",
+                ApiExtractorType::Query => "query",
+            }
+            .to_string();
+            param.push_str(": ");
+            param.push_str(&Self::Inner::name_with_generics());
+            Some(param)
+        }
 
-    impl A for u32 {
-        type B = u32;
-    }
+        fn options() -> Option<String> {
+            Some(
+                match Self::TYPE? {
+                    ApiExtractorType::Json => "body: JSON.stringify(json)",
+                    // Todo: Add support for Path simply being String, (String, String), ...
+                    ApiExtractorType::Path => "path",
+                    ApiExtractorType::Query => "query",
+                }
+                .to_string(),
+            )
+        }
+
+        fn response_type() -> Option<String> {
+            Some(format!(
+                ": CancelablePromise<{}>",
+                Self::Inner::name_with_generics()
+            ))
+        }
+
+        fn add_dependencies(dependencies: &mut Dependencies) {
+            dependencies.add::<Self::Inner>();
+        }
+    };
 }
 
 #[derive(Default)]
@@ -71,13 +82,13 @@ impl ApiRequest {
             if let Some(options) = T::options() {
                 self.options.push(options);
             }
-            self.types.add::<T::Inner>();
+            T::add_dependencies(&mut self.types);
         }
     }
 
     pub fn register_response_type<T: ApiExtractor>(&mut self) {
         self.response_type = T::response_type();
-        self.types.add::<T::Inner>();
+        T::add_dependencies(&mut self.types);
     }
 
     pub fn finish(
@@ -129,11 +140,15 @@ pub enum ApiExtractorType {
 impl<T: TS> ApiExtractor for Json<T> {
     type Inner = T;
     const TYPE: Option<ApiExtractorType> = Some(ApiExtractorType::Json);
+
+    impl_api_extractor!();
 }
 
 impl<T: TS> ApiExtractor for Query<T> {
     type Inner = T;
     const TYPE: Option<ApiExtractorType> = Some(ApiExtractorType::Query);
+
+    impl_api_extractor!();
 }
 
 // Todo: Add Form support
@@ -146,9 +161,11 @@ impl<T: TS> ApiExtractor for Form<T> {
 impl<T: TS> ApiExtractor for Path<T> {
     type Inner = T;
     const TYPE: Option<ApiExtractorType> = Some(ApiExtractorType::Path);
+
+    impl_api_extractor!();
 }
 
-impl<T: TS> ApiExtractor for Data<T> {
+impl<T> ApiExtractor for Data<T> {
     type Inner = T;
     const TYPE: Option<ApiExtractorType> = None;
 }
