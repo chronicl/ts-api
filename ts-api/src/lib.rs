@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs::create_dir_all, fs::write, path::Path};
 
-pub use ts_api_core::{ApiHandler, ApiMethod, ApiRequest, ApiExtractor, ApiExtractorType};
+pub use ts_api_core::{ApiExtractor, ApiExtractorType, ApiHandler, ApiMethod, ApiRequest};
 pub use ts_api_macros::api;
 pub use ts_rs::TS;
 
@@ -48,16 +48,17 @@ impl Api {
         self
     }
 
-    pub fn export_ts_client(&self, export_dir: impl AsRef<Path>) {
+    pub fn export_ts_client(&self, export_dir: impl AsRef<Path>) -> std::io::Result<()> {
         let api_dir = export_dir.as_ref().join("api");
-        create_dir_all(&api_dir).unwrap();
+        create_dir_all(&api_dir)?;
 
-        write(export_dir.as_ref().join("request.ts"), TS_REQUEST).unwrap();
-        write(export_dir.as_ref().join("CancelablePromise.ts"), TS_PROMISE).unwrap();
-        write(api_dir.join("index.ts"), &self.typescript_api).unwrap();
+        write(export_dir.as_ref().join("request.ts"), TS_REQUEST)?;
+        write(export_dir.as_ref().join("CancelablePromise.ts"), TS_PROMISE)?;
+        write(api_dir.join("index.ts"), &self.typescript_api)?;
         for (file_name, content) in &self.typescript {
-            write(api_dir.join(file_name).with_extension("ts"), content).unwrap();
+            write(api_dir.join(file_name).with_extension("ts"), content)?;
         }
+        Ok(())
     }
 }
 
