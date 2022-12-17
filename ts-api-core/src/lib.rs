@@ -13,7 +13,7 @@ pub trait ApiExtractor {
         None
     }
 
-    fn options() -> Option<String> {
+    fn options() -> Option<Vec<String>> {
         None
     }
 
@@ -40,17 +40,22 @@ macro_rules! impl_api_extractor {
             Some(param)
         }
 
-        fn options() -> Option<String> {
+        fn options() -> Option<Vec<String>> {
             Some(
                 match Self::TYPE? {
                     ApiExtractorType::Json => {
-                        "body: JSON.stringify(json),\nmediaType: 'application/json; charset=utf-8'"
+                        vec![
+                            "body: JSON.stringify(json)",
+                            "mediaType: 'application/json; charset=utf-8'",
+                        ]
                     }
                     // Todo: Add support for Path simply being String, (String, String), ...
-                    ApiExtractorType::Path => "path",
-                    ApiExtractorType::Query => "query",
+                    ApiExtractorType::Path => vec!["path"],
+                    ApiExtractorType::Query => vec!["query"],
                 }
-                .to_string(),
+                .into_iter()
+                .map(str::to_string)
+                .collect(),
             )
         }
 
@@ -84,7 +89,7 @@ impl ApiRequest {
         if let Some(p) = T::param() {
             self.params.push(p);
             if let Some(options) = T::options() {
-                self.options.push(options);
+                self.options.extend(options);
             }
             T::add_dependencies(&mut self.types);
         }
