@@ -9,5 +9,5 @@ edition = "2021"
 darling = { version = "0.14" }
 syn = "1"
 ts-rs = { workspace = true }
-poem = { workspace = true }
+poem = { workspace = true, features = ["cookie"] }
 convert_case = "0.6"

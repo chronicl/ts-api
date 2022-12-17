@@ -1,5 +1,8 @@
 use convert_case::{Case, Casing};
-use poem::web::{Data, Form, Json, Path, Query};
+use poem::web::{
+    cookie::{Cookie, CookieJar},
+    Data, Form, Json, Path, Query,
+};
 use ts_rs::{Dependencies, TS};
 
 pub trait ApiExtractor {
@@ -147,6 +150,11 @@ impl<T: TS> ApiExtractor for Path<T> {
 
 impl<T: TS> ApiExtractor for Data<T> {
     type Inner = T;
+    const TYPE: Option<ApiExtractorType> = None;
+}
+
+impl ApiExtractor for CookieJar {
+    type Inner = ();
     const TYPE: Option<ApiExtractorType> = None;
 }
 

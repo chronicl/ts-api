@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs::create_dir_all, fs::write, path::Path};
 
-pub use ts_api_core::{ApiHandler, ApiMethod, ApiRequest};
+pub use ts_api_core::{ApiHandler, ApiMethod, ApiRequest, ApiExtractor, ApiExtractorType};
 pub use ts_api_macros::api;
 pub use ts_rs::TS;
 
