@@ -24,6 +24,8 @@ pub trait ApiExtractor {
     fn add_dependencies(dependencies: &mut Dependencies) {}
 }
 
+// Todo: Should redo this to remove ApiExtractorType completely
+// and just implement ApiExtractor for each type manually (or use a helper macro)
 macro_rules! impl_api_extractor {
     () => {
         fn param() -> Option<String> {
@@ -41,7 +43,9 @@ macro_rules! impl_api_extractor {
         fn options() -> Option<String> {
             Some(
                 match Self::TYPE? {
-                    ApiExtractorType::Json => "body: JSON.stringify(json)",
+                    ApiExtractorType::Json => {
+                        "body: JSON.stringify(json),\nmediaType: 'application/json; charset=utf-8'"
+                    }
                     // Todo: Add support for Path simply being String, (String, String), ...
                     ApiExtractorType::Path => "path",
                     ApiExtractorType::Query => "query",
