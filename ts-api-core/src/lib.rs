@@ -30,7 +30,7 @@ macro_rules! impl_api_extractor {
     () => {
         fn param() -> Option<String> {
             let mut param = match Self::TYPE? {
-                ApiExtractorType::Json => "json",
+                ApiExtractorType::Json => "body",
                 ApiExtractorType::Path => "path",
                 ApiExtractorType::Query => "query",
             }
@@ -44,7 +44,7 @@ macro_rules! impl_api_extractor {
             Some(
                 match Self::TYPE? {
                     ApiExtractorType::Json => {
-                        vec!["body: json", "mediaType: 'application/json; charset=utf-8'"]
+                        vec!["body", "mediaType: 'application/json; charset=utf-8'"]
                     }
                     // Todo: Add support for Path simply being String, (String, String), ...
                     ApiExtractorType::Path => vec!["path"],
