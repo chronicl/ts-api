@@ -1,8 +1,6 @@
 use std::{collections::HashMap, fs::create_dir_all, fs::write, path::Path};
-
 pub use ts_api_core::{ApiExtractor, ApiExtractorType, ApiHandler, ApiMethod, ApiRequest};
 pub use ts_api_macros::api;
-pub use ts_rs::TS;
 
 const TS_REQUEST: &str = include_str!("../ts/request.ts");
 const TS_PROMISE: &str = include_str!("../ts/CancelablePromise.ts");
@@ -67,6 +65,7 @@ fn test_api() {
     use crate as ts_api;
     use poem::web::{Data, Json, Path, Query};
     use serde::{Deserialize, Serialize};
+    use ts_rs::TS;
 
     #[derive(TS, Deserialize, Serialize)]
     struct Auth {
@@ -79,13 +78,20 @@ fn test_api() {
         token: String,
     }
 
+    #[derive(TS, Deserialize, Serialize)]
+    #[ts(type = "enum")]
+    enum Error {
+        NotAndEmail,
+        InvalidPassword,
+    }
+
     #[api(method = "get", path = "/user")]
     async fn user(b: Json<String>) -> Json<u32> {
         Json(0)
     }
 
     #[api(method = "get", path = "/user/login")]
-    async fn login(b: Json<Auth>) -> Json<Result<AuthResponse, u32>> {
+    async fn login(b: Json<Auth>) -> Json<Result<AuthResponse, Error>> {
         Json(Ok(AuthResponse { token: "".into() }))
     }
 
@@ -93,5 +99,5 @@ fn test_api() {
         .register(user)
         .register(login);
 
-    api.export_ts_client("test-api-ts");
+    api.export_ts_client("test-api-ts").unwrap();
 }

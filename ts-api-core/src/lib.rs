@@ -104,7 +104,7 @@ impl ApiRequest {
         path: impl AsRef<str>,
     ) -> String {
         let params: String = self.params.join(", ");
-        let options: String = self.options.join(",\n");
+        let options: String = self.options.join(",\n\t\t\t");
         let response_type = self.response_type.to_owned().unwrap_or_default();
         let server_url = server_url.as_ref();
         let method = method.as_ref();
